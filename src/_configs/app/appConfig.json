@@ -1,0 +1,10 @@
+{
+  "baseUrl": "http://13.233.87.102:9800",
+  "emailLinkExpiryTime": 24,
+  "maxWrongPasswordTry": 3,
+  "emailVerifyLinkFormat": "baseurl/userid/token",
+  "secret": {
+    "encryptionKey": "j/CxoKWjb/RGDNr9ZR4X5STUoqr2/hY1vlYIffGIa1Y=",
+    "iv": "NJQOCtA/kkIeI4jpnKx/8A=="
+  }
+}
