@@ -21,7 +21,7 @@ import { EmailNotification } from '../entities/emailNotification.entity';
 const qs = require('qs');
 dotenv.config();
 
-const { refreshTokenExpireTime, resetTokenExpireTime, defaultPassword } =
+const { refreshTokenExpireTime, resetTokenExpireTime, defaultPassword, client_id,client_secret } =
   process.env;
 const jwt = new JWT();
 export class AuthService {
@@ -418,8 +418,8 @@ export class AuthService {
           grant_type: 'authorization_code',
           code: token,
           redirect_uri: 'http://13.233.87.102:9800/',
-          client_id: '78xmjwb0liev5n',
-          client_secret: 'Fm9GtoVtmgj34wN0',
+          client_id: client_id,
+          client_secret: client_secret,
         };
         const data = await axios.post(
           'https://www.linkedin.com/oauth/v2/accessToken',
