@@ -42,7 +42,8 @@ jobs:
         run: |
           ssh -i private_key.pem -o "StrictHostKeyChecking=no" ${{ secrets.USERNAME }}@${{ secrets.HOST_DNS }} << 'EOF'
             cd /home/${{ secrets.USERNAME }}/dealovate/auth-service/
-            pm2 delete auth-service
+            npm install       # Install dependencies
+            pm2 delete auth-service || true
             unzip -o auth.zip
-            pm2 --name auth-service start npm -- start
+            pm2 start ts-node --name "auth-service" -- src/app.ts
           EOF
