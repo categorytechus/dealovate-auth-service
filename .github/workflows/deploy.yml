@@ -45,5 +45,5 @@ jobs:
             pm2 delete auth-service || true
             unzip -o auth.zip
             npm install # Install dependencies
-            pm2 start npm --name "auth-service" -- run start
+            pm2 start build/app.js --name "auth-service"
           EOF
