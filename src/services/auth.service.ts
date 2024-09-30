@@ -62,7 +62,13 @@ export class AuthService {
         userLogin.userId,
       );
       return loginDetail;
-    } catch (err: any) {
+    } catch (error: any) {
+        let err = new CustomError(
+          401,
+          'fail',
+          'RecordNotFound',
+          ErrorMessage.RecordNotFound,
+        );
       throw err;
     }
   }
@@ -115,7 +121,7 @@ export class AuthService {
       newUser.mobile = user.mobile;
       newUser.isMobileVerfied = 0;
       newUser.isEmailVerified = 0;
-      newUser.alternateMobile = '';
+     // newUser.alternateMobile = '';
       newUser.gender = '';
       newUser.nationality = '';
       newUser.language = '';

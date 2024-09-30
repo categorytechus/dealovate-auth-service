@@ -17,10 +17,10 @@ function createRoles(roles: Role[]) {
     role.roleName = roles[i].roleName;
     role.roleDesc = roles[i].roleDesc;
     role.isActive = 1;
-    role.createdAt = new Date();
-    role.createdBy = 'superadmin';
-    role.updatedAt = new Date();
-    role.updatedBy = 'superadmin';
+    // role.createdAt = new Date();
+    // role.createdBy = 'superadmin';
+    // role.updatedAt = new Date();
+    // role.updatedBy = 'superadmin';
     rls.push(role);
   }
   return rls;
@@ -51,7 +51,7 @@ function createUser(superAdminId: string) {
   user.isEmailVerified = 0;
   user.mobile = null;
   user.isMobileVerfied = 0;
-  user.alternateMobile = null;
+ // user.alternateMobile = null;
   user.gender = null;
   user.dob = null;
   user.profilePicture = '';

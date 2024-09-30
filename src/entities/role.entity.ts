@@ -20,27 +20,27 @@ export class Role extends BaseEntity {
   @Column({ name: 'role_desc', nullable: true })
   roleDesc: string;
 
-  @Column('jsonb', { name: 'role_claim', nullable: false, default: {} })
-  roleClaim: any;
+  // @Column('jsonb', { name: 'role_claim', nullable: false, default: {} })
+  // roleClaim: any;
 
   @Column({ name: 'is_active', nullable: false, default: 1 })
   isActive: number;
 
-  @CreateDateColumn({ name: 'created_at' })
-  createdAt: Date;
+  // @CreateDateColumn({ name: 'createdAt' })
+  // createdAt: Date;
 
-  @Column({ name: 'created_by', nullable: false })
-  createdBy: string;
+  // @Column({ name: 'created_by', nullable: false })
+  // createdBy: string;
 
-  @UpdateDateColumn({ name: 'updated_at', nullable: true })
-  updatedAt: Date;
+  // @UpdateDateColumn({ name: 'updated_at', nullable: true })
+  // updatedAt: Date;
 
-  @Column({ name: 'updated_by', nullable: true })
-  updatedBy: string;
+  // @Column({ name: 'updated_by', nullable: true })
+  // updatedBy: string;
 
-  @OneToMany(() => User, (user) => user.userId, {
-    onUpdate: 'CASCADE',
-    onDelete: 'CASCADE',
-  })
-  users: User[];
+  // @OneToMany(() => User, (user) => user.userId, {
+  //   onUpdate: 'CASCADE',
+  //   onDelete: 'CASCADE',
+  // })
+  // users: User[];
 }

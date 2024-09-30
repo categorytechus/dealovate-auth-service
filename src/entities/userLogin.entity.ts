@@ -57,7 +57,7 @@ export class UserLogin extends BaseEntity {
   @Column({ name: 'is_active', nullable: false, default: 1 })
   isActive: number;
 
-  @CreateDateColumn({ name: 'created_at' })
+  @CreateDateColumn({ name: 'createdAt' })
   createdAt: Date;
 
   @Column({ name: 'created_by', nullable: false })

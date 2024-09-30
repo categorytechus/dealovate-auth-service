@@ -90,6 +90,6 @@ app.use('/api', route);
 app.use(CustomResponse);
 const httpServer = createServer(app);
 
-httpServer.listen(7200, async () => {
+httpServer.listen(port, async () => {
   console.log(`server running on http://localhost:${port}`);
 });

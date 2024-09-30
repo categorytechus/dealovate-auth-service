@@ -26,14 +26,14 @@ export class User {
   @Column({ name: 'is_email_verified', nullable: false })
   isEmailVerified: number;
 
-  @Column({ name: 'mobile', nullable: true })
+  @Column({ name: 'phone_number', nullable: true })
   mobile: string;
 
-  @Column({ name: 'is_mobile_verfied', nullable: false })
+  @Column({ name: 'is_mobile_verified', nullable: false })
   isMobileVerfied: number;
 
-  @Column({ name: 'alternate_mobile', nullable: true })
-  alternateMobile: string;
+  // @Column({ name: 'alternate_mobile', nullable: true })
+  // alternateMobile: string;
 
   @Column({ name: 'gender', nullable: true })
   gender: string;
@@ -63,10 +63,10 @@ export class User {
   @Column('jsonb', { name: 'other_info', nullable: true, default: {} })
   otherInfo: any;
 
-  @Column({ name: 'is_active', nullable: false, default: 1 })
+  @Column({ name: 'is_deleted', nullable: false, default: 1 })
   isActive: number;
 
-  @CreateDateColumn({ name: 'created_at' })
+  @CreateDateColumn({ name: 'createdAt' })
   createdAt: Date;
 
   @Column({ name: 'created_by', nullable: true })
