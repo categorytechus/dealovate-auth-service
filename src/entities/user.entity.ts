@@ -57,8 +57,8 @@ export class User {
   })
   dob: string;
 
-  @Column({ name: 'profile_picture', nullable: true })
-  profilePicture: string;
+  // @Column({ name: 'profile_picture', nullable: true })
+  // profilePicture: string;
 
   @Column('jsonb', { name: 'other_info', nullable: true, default: {} })
   otherInfo: any;
@@ -66,7 +66,7 @@ export class User {
   @Column({ name: 'is_deleted', nullable: false, default: 1 })
   isActive: number;
 
-  @CreateDateColumn({ name: 'createdAt' })
+  @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
   @Column({ name: 'created_by', nullable: true })

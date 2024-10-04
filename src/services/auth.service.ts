@@ -63,6 +63,7 @@ export class AuthService {
       );
       return loginDetail;
     } catch (error: any) {
+      console.log(error)
         let err = new CustomError(
           401,
           'fail',
@@ -122,15 +123,15 @@ export class AuthService {
       newUser.isMobileVerfied = 0;
       newUser.isEmailVerified = 0;
      // newUser.alternateMobile = '';
-      newUser.gender = '';
-      newUser.nationality = '';
-      newUser.language = '';
-      newUser.currency = '';
-      newUser.timezone = 1;
-      newUser.dob = null;
-      newUser.profilePicture = null;
-      newUser.otherInfo = '{}';
-      newUser.isActive = 1;
+      // newUser.gender = '';
+      // newUser.nationality = '';
+      // newUser.language = '';
+      // newUser.currency = '';
+      // newUser.timezone = 1;
+      // newUser.dob = null;
+      // newUser.profilePicture = null;
+      // newUser.otherInfo = '{}';
+      // newUser.isActive = 1;
       newUser.createdAt = new Date();
       newUser.createdBy = '';
       let addedUser = await userRepo.save(newUser);
@@ -556,7 +557,7 @@ export class AuthService {
             const user: User = await db.manager.findOne(User, {
               where: {
                 userId: userLogin.userId,
-                isActive: 1,
+                // isActive: 1,
               },
             });
             const userRoles: UserRole[] = await db.manager.find(UserRole, {
@@ -576,7 +577,7 @@ export class AuthService {
             userDetail.mobile = user.mobile;
             userDetail.isEmailVerified = user.isEmailVerified;
             userDetail.isMobileVerfied = user.isMobileVerfied;
-            userDetail.profilePicture = user.profilePicture;
+            // userDetail.profilePicture = user.profilePicture;
             let token = jwt.generateToken(userDetail, {});
             let refreshToken = jwt.generateRefreshToken(userLogin.userId);
             let userLoginDetail: UserLogin = await userLoginRepo.findOne({
@@ -633,7 +634,7 @@ export class AuthService {
           const user: User = await db.manager.findOne(User, {
             where: {
               userId: userLogin.userId,
-              isActive: 1,
+              // isActive: 1,
             },
           });
           const userRoles: UserRole[] = await db.manager.find(UserRole, {
@@ -653,7 +654,7 @@ export class AuthService {
           userDetail.mobile = user.mobile;
           userDetail.isEmailVerified = user.isEmailVerified;
           userDetail.isMobileVerfied = user.isMobileVerfied;
-          userDetail.profilePicture = user.profilePicture;
+          // userDetail.profilePicture = user.profilePicture;
           let token = jwt.generateToken(userDetail, {});
           let refreshToken = jwt.generateRefreshToken(userLogin.userId);
           let userLoginDetail: UserLogin = await userLoginRepo.findOne({
@@ -728,7 +729,7 @@ export class AuthService {
         let user: User = await db.manager.findOne(User, {
           where: {
             userId: userLogin.userId,
-            isActive: 1,
+            // isActive: 1,
           },
         });
         const userRoles: UserRole[] = await db.manager.find(UserRole, {
@@ -749,7 +750,7 @@ export class AuthService {
         userDetail.mobile = user.mobile;
         userDetail.isEmailVerified = user.isEmailVerified;
         userDetail.isMobileVerfied = user.isMobileVerfied;
-        userDetail.profilePicture = user.profilePicture;
+        // userDetail.profilePicture = user.profilePicture;
         let token = jwt.generateToken(userDetail, {});
         
         let refreshToken = jwt.generateRefreshToken(userLogin.userId);
