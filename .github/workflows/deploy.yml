@@ -1,0 +1,49 @@
+name: calendar-deploy-workflow
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js environment
+        uses: actions/setup-node@v2
+        with:
+          node-version: 18
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build the app
+        run: |
+          npm run clean --if-present
+          npm run build --if-present
+
+      - name: Zip the build files
+        run: zip -r auth.zip .
+
+      - name: Transfer build to EC2
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.EC2_SSH_KEY }}
+        run: |
+          echo "$SSH_PRIVATE_KEY" > private_key.pem
+          chmod 600 private_key.pem
+          scp -i private_key.pem -o "StrictHostKeyChecking=no" auth.zip ${{ secrets.USERNAME }}@${{ secrets.HOST_DNS }}:/home/ubuntu/dealovate/auth-service/auth.zip
+
+      - name: SSH into EC2 and deploy
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.EC2_SSH_KEY }}
+        run: |
+          ssh -i private_key.pem -o "StrictHostKeyChecking=no" ${{ secrets.USERNAME }}@${{ secrets.HOST_DNS }} << 'EOF'
+            cd /home/${{ secrets.USERNAME }}/dealovate/auth-service/
+            pm2 delete auth-service || true
+            unzip -o auth.zip
+            npm install # Install dependencies
+            pm2 start build/app.js --name "auth-service"
+          EOF
