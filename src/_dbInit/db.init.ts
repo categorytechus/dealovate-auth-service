@@ -54,7 +54,7 @@ function createUser(superAdminId: string) {
  // user.alternateMobile = null;
   user.gender = null;
   user.dob = null;
-  user.profilePicture = '';
+  // user.profilePicture = '';
   user.nationality = '';
   user.otherInfo = '{}';
   user.isActive = 1;
