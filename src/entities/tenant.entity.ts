@@ -78,3 +78,47 @@ export class Tenant {
   @Column({ name: 'updated_by', nullable: true })
   updatedBy: string;
 }
+
+
+
+
+// import {
+//   Entity,
+//   PrimaryGeneratedColumn,
+//   Column,
+//   CreateDateColumn,
+//   UpdateDateColumn,
+// } from 'typeorm';
+
+// @Entity({ name: 'tenants' })
+// export class Tenant {
+//   @PrimaryGeneratedColumn('uuid', { name: 'tenant_id' })
+//   tenantId: string;
+
+//   @Column({ name: 'support_email', nullable: true })
+//   supportEmail: string;
+
+//   @Column({ name: 'support_phone', nullable: true })
+//   supportPhone: string;
+
+//   @Column({ name: 'app_url', nullable: true })
+//   appUrl: string;
+
+//   @Column({ name: 'logo_lg_document_id', nullable: true })
+//   logo: string;
+
+//   @Column({ name: 'created_by', nullable: true })
+//   createdBy: string;
+
+//   @Column({ name: 'is_deleted', nullable: false, default: 1 })
+//   isActive: number;
+
+//   @CreateDateColumn({ name: 'created_at' })
+//   createdAt: Date;
+
+//   @Column({ name: 'updated_by', nullable: true })
+//   updatedBy: string;
+
+//   @UpdateDateColumn({ name: 'updated_at' })
+//   updatedAt: Date;
+// }

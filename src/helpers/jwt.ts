@@ -10,6 +10,7 @@ const {  } = process.env;
 //import User from '../_models/user';
 
 const { dirPath, allowedOrigins, aud, iss, sub,tokenExpireTime } = process.env;
+const issuers = iss.split(',');
 
 export class JWT {
   generateToken(userDetail: any, userClaims: any) {
@@ -59,7 +60,7 @@ export class JWT {
       let verifyOptions: VerifyOptions = {
         algorithms: ['RS256'],
         audience: aud,
-        issuer: iss,
+        issuer: issuers,
         ignoreExpiration: false,
       };
 

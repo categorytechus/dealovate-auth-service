@@ -16,7 +16,7 @@ export const db = new DataSource({
   username: db_user,
   password: db_password,
   database: db_name,
-  synchronize: node_env === 'dev' ? true : false,
+  synchronize: false,
   logging: false,
   entities: [path.join(__dirname, '../../entities') + `/*.entity.{ts,js}`],
   // namingStrategy: new CustomNamingStrategy(),

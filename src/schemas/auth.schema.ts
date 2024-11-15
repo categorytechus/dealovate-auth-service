@@ -6,7 +6,7 @@ const SignIn = Joi.object({
     .required()
     .error((errors) => CustomError('userName', errors)),
   password: Joi.string()
-    .required()
+    .optional()
     .error((errors) => CustomError('password', errors)),
 });
 const SocialSignIn = Joi.object({

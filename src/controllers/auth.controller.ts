@@ -13,10 +13,16 @@ export class AuthController {
   async signIn(req: Request, res: Response, next: NextFunction) {
     try {
       let userName: string = req.body.userName;
-      let password: string = req.body.password;
+      let password: string | undefined = req.body.password;
+
+      let token: string | undefined = req.headers['authorization']
+      ? req.headers['authorization'].split(' ')[1]  // Extract token from "Bearer <token>"
+      : undefined;
+
       let userDetail: LoginResponse = await authService.checkUser(
         userName,
         password,
+        token
       );
       res.locals.data = userDetail;
     } catch (err) {

@@ -25,51 +25,163 @@ const { refreshTokenExpireTime, resetTokenExpireTime, defaultPassword, client_id
   process.env;
 const jwt = new JWT();
 export class AuthService {
-  async checkUser(userName: string, password: string): Promise<LoginResponse> {
+  // async checkUser(userName: string, password: string): Promise<LoginResponse> {
+  //   let db = await getDb();
+  //   try {
+  //     let userLoginRepo = await db.getRepository(UserLogin);
+  //     let userLogin: UserLogin = await db.manager.findOne(UserLogin, {
+  //       where: {
+  //         userName: userName != undefined ? userName : '',
+  //         isActive: 1,
+  //       },
+  //     });
+  //     if (userLogin == undefined) {
+  //       let err = new CustomError(
+  //         401,
+  //         'fail',
+  //         'UserNotFound',
+  //         ErrorMessage.UserNotFound,
+  //       );
+  //       throw err;
+  //     }
+  //     if (!Encrypt.comparePassword(userLogin.hashPassword, password)) {
+  //       userLogin.wrongCredentialCounter = userLogin.wrongCredentialCounter + 1;
+  //       if (userLogin.wrongCredentialCounter >= appConfig.maxWrongPasswordTry) {
+  //         userLogin.isBlocked = 1;
+  //       }
+  //       let updatedUserLogin = await userLoginRepo.save(userLogin);
+  //       let err = new CustomError(
+  //         401,
+  //         'fail',
+  //         'IncorrectPassword',
+  //         `${ErrorMessage.IncorrectPassword}, ${appConfig.maxWrongPasswordTry - userLogin.wrongCredentialCounter} attempt is remaining`,
+  //       );
+  //       throw err;
+  //     }
+  //     let loginDetail: LoginResponse = await this.getLoginDetail(
+  //       userLogin.userId,
+  //     );
+  //     return loginDetail;
+  //   } catch (error: any) {
+  //     console.log(error)
+  //       let err = new CustomError(
+  //         401,
+  //         'fail',
+  //         'RecordNotFound',
+  //         ErrorMessage.RecordNotFound,
+  //       );
+  //     throw err;
+  //   }
+  // }
+
+  async checkUser(userName: string, password: string | undefined, token: string | undefined): Promise<LoginResponse> {
     let db = await getDb();
     try {
       let userLoginRepo = await db.getRepository(UserLogin);
-      let userLogin: UserLogin = await db.manager.findOne(UserLogin, {
-        where: {
-          userName: userName != undefined ? userName : '',
-          isActive: 1,
-        },
-      });
-      if (userLogin == undefined) {
-        let err = new CustomError(
-          401,
-          'fail',
-          'UserNotFound',
-          ErrorMessage.UserNotFound,
-        );
-        throw err;
-      }
-      if (!Encrypt.comparePassword(userLogin.hashPassword, password)) {
-        userLogin.wrongCredentialCounter = userLogin.wrongCredentialCounter + 1;
-        if (userLogin.wrongCredentialCounter >= appConfig.maxWrongPasswordTry) {
-          userLogin.isBlocked = 1;
+  
+      if (token) {
+        // Step 1: Validate token and extract userId from token
+        const aud = 'http://127.98.102.451:8701'; // Secure for specific domain
+        let decodedToken = await jwt.validateToken(token,aud); // assuming you have a verifyToken method
+        if (!decodedToken) {
+          let err = new CustomError(
+            403,
+            'fail',
+            'InvalidToken',
+            'The provided token is invalid or expired.'
+          );
+          throw err;
         }
-        let updatedUserLogin = await userLoginRepo.save(userLogin);
-        let err = new CustomError(
-          401,
-          'fail',
-          'IncorrectPassword',
-          `${ErrorMessage.IncorrectPassword}, ${appConfig.maxWrongPasswordTry - userLogin.wrongCredentialCounter} attempt is remaining`,
-        );
-        throw err;
+  
+        let userId = decodedToken.userId; // Extract userId from the decoded token
+  
+        // Step 2: Fetch userLogin by userName (no need for password check if token is present)
+        let userLogin: UserLogin = await db.manager.findOne(UserLogin, {
+          where: {
+            userName: userName,
+            isActive: 1,
+          },
+        });
+  
+        if (!userLogin) {
+          let err = new CustomError(
+            401,
+            'fail',
+            'UserNotFound',
+            'User not found'
+          );
+          throw err;
+        }
+  
+        // Check if the userName matches the userId from the token
+        if (userLogin.userId !== userId) {
+          let err = new CustomError(
+            403,
+            'fail',
+            'Unauthorized',
+            'The user does not have access to this tenant'
+          );
+          throw err;
+        }
+  
+        let loginDetail: LoginResponse = await this.getLoginDetail(userLogin.userId);
+        return loginDetail;
+  
+      } else {
+
+        if (!password) {
+          let err = new CustomError(
+            401,
+            'fail',
+            'PasswordRequired',
+            'Password is required for login'
+          );
+          throw err;
+        }
+        // Step 3: If no token is provided, follow the original flow (password check)
+        let userLogin: UserLogin = await db.manager.findOne(UserLogin, {
+          where: {
+            userName: userName != undefined ? userName : '',
+            isActive: 1,
+          },
+        });
+  
+        if (!userLogin) {
+          let err = new CustomError(
+            401,
+            'fail',
+            'UserNotFound',
+            'User not found'
+          );
+          throw err;
+        }
+  
+        if (!Encrypt.comparePassword(userLogin.hashPassword, password)) {
+          userLogin.wrongCredentialCounter = userLogin.wrongCredentialCounter + 1;
+          if (userLogin.wrongCredentialCounter >= appConfig.maxWrongPasswordTry) {
+            userLogin.isBlocked = 1;
+          }
+          let updatedUserLogin = await userLoginRepo.save(userLogin);
+          let err = new CustomError(
+            401,
+            'fail',
+            'IncorrectPassword',
+            `${ErrorMessage.IncorrectPassword}, ${appConfig.maxWrongPasswordTry - userLogin.wrongCredentialCounter} attempts remaining`
+          );
+          throw err;
+        }
+  
+        let loginDetail: LoginResponse = await this.getLoginDetail(userLogin.userId);
+        return loginDetail;
       }
-      let loginDetail: LoginResponse = await this.getLoginDetail(
-        userLogin.userId,
-      );
-      return loginDetail;
     } catch (error: any) {
-      console.log(error)
-        let err = new CustomError(
-          401,
-          'fail',
-          'RecordNotFound',
-          ErrorMessage.RecordNotFound,
-        );
+      console.log(error);
+      let err = new CustomError(
+        401,
+        'fail',
+        'RecordNotFound',
+        ErrorMessage.RecordNotFound,
+      );
       throw err;
     }
   }
@@ -740,7 +852,8 @@ export class AuthService {
             userId: userLogin.userId,
             isActive: 1,
           },
-        });
+        });       
+  
         let userDetail: any = {};
         userDetail.userId = user.userId;
         userDetail.firstName = user.firstName;
