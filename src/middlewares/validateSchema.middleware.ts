@@ -64,8 +64,10 @@ const SchemaValidator = (useJoiError = true): RequestHandler => {
       }
       // validation successful
       req.body = value;
+
       return next();
     } else {
+
       return next();
     }
   };

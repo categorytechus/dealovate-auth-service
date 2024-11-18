@@ -18,10 +18,11 @@ import { UserOtpLinkVerification } from '../entities/userOtpLinkVerification.ent
 import appConfig from '../_configs/app/appConfig.json';
 import moment from 'moment';
 import { EmailNotification } from '../entities/emailNotification.entity';
+import { Role } from '../entities/role.entity';
 const qs = require('qs');
 dotenv.config();
 
-const { refreshTokenExpireTime, resetTokenExpireTime, defaultPassword, client_id,client_secret } =
+const { refreshTokenExpireTime, resetTokenExpireTime, defaultPassword, client_id, client_secret } =
   process.env;
 const jwt = new JWT();
 export class AuthService {
@@ -78,11 +79,11 @@ export class AuthService {
     let db = await getDb();
     try {
       let userLoginRepo = await db.getRepository(UserLogin);
-  
+
       if (token) {
         // Step 1: Validate token and extract userId from token
         const aud = 'http://127.98.102.451:8701'; // Secure for specific domain
-        let decodedToken = await jwt.validateToken(token,aud); // assuming you have a verifyToken method
+        let decodedToken = await jwt.validateToken(token, aud); // assuming you have a verifyToken method
         if (!decodedToken) {
           let err = new CustomError(
             403,
@@ -92,9 +93,9 @@ export class AuthService {
           );
           throw err;
         }
-  
+
         let userId = decodedToken.userId; // Extract userId from the decoded token
-  
+
         // Step 2: Fetch userLogin by userName (no need for password check if token is present)
         let userLogin: UserLogin = await db.manager.findOne(UserLogin, {
           where: {
@@ -102,7 +103,7 @@ export class AuthService {
             isActive: 1,
           },
         });
-  
+
         if (!userLogin) {
           let err = new CustomError(
             401,
@@ -112,7 +113,7 @@ export class AuthService {
           );
           throw err;
         }
-  
+
         // Check if the userName matches the userId from the token
         if (userLogin.userId !== userId) {
           let err = new CustomError(
@@ -123,10 +124,10 @@ export class AuthService {
           );
           throw err;
         }
-  
+
         let loginDetail: LoginResponse = await this.getLoginDetail(userLogin.userId);
         return loginDetail;
-  
+
       } else {
 
         if (!password) {
@@ -145,7 +146,7 @@ export class AuthService {
             isActive: 1,
           },
         });
-  
+
         if (!userLogin) {
           let err = new CustomError(
             401,
@@ -155,7 +156,7 @@ export class AuthService {
           );
           throw err;
         }
-  
+
         if (!Encrypt.comparePassword(userLogin.hashPassword, password)) {
           userLogin.wrongCredentialCounter = userLogin.wrongCredentialCounter + 1;
           if (userLogin.wrongCredentialCounter >= appConfig.maxWrongPasswordTry) {
@@ -170,7 +171,7 @@ export class AuthService {
           );
           throw err;
         }
-  
+
         let loginDetail: LoginResponse = await this.getLoginDetail(userLogin.userId);
         return loginDetail;
       }
@@ -190,6 +191,9 @@ export class AuthService {
       let db = await getDb();
       let userLoginRepo = await db.getRepository(UserLogin);
       let userRepo = await db.getRepository(User);
+      let roleRepo = await db.getRepository(Role);
+      let userRolesRepo = await db.getRepository(UserRole);
+      let tenantUsersRepo = await db.getRepository(TenantUser);
       let userLogin: UserLogin = await userLoginRepo.findOne({
         where: { userName: user.emailId != undefined ? user.emailId : '' },
       });
@@ -234,7 +238,7 @@ export class AuthService {
       newUser.mobile = user.mobile;
       newUser.isMobileVerfied = 0;
       newUser.isEmailVerified = 0;
-     // newUser.alternateMobile = '';
+      // newUser.alternateMobile = '';
       // newUser.gender = '';
       // newUser.nationality = '';
       // newUser.language = '';
@@ -280,6 +284,73 @@ export class AuthService {
         );
         throw err;
       }
+
+      //////////////////////////////////////////////////////////////////////////////////////////////////
+
+      let role: Role = await roleRepo.findOne({
+        where: { roleName: user.role }, // Assuming role is coming as string
+      });
+      if (!role) {
+        let err = new CustomError(
+          404,
+          'fail',
+          'RoleNotFound',
+          `Role '${user.role}' not found.`,
+        );
+        throw err;
+      }
+
+      // Create entry in user_roles table
+      let newUserRole: UserRole = new UserRole();
+      newUserRole.userId = addedUser.userId;
+      newUserRole.roleId = role.roleId;
+      newUserRole.tenantId = user.tenantId;
+      newUserRole.isActive = 1;
+      newUserRole.createdBy = addedUser.userId;
+      newUserRole.createdAt = new Date();
+      newUserRole.updatedBy = addedUser.userId;
+      newUserRole.updatedAt = new Date();
+
+      let addedUserRole = await userRolesRepo.save(newUserRole);
+      if (!addedUserRole) {
+        await userLoginRepo.remove(addedUserLogin); // Clean up if the role insertion fails
+        await userRepo.remove(addedUser); // Clean up if the role insertion fails
+        let err = new CustomError(
+          409,
+          'fail',
+          'UserRoleCreateError',
+          'Error creating user role association.',
+        );
+        throw err;
+      }
+
+      if (user.tenantId) {
+        let newTenantUser = new TenantUser();
+        newTenantUser.tenantId = user.tenantId; // tenant_id from frontend
+        newTenantUser.userId = addedUser.userId; // user_id from the newly created user
+        newTenantUser.isActive = 1;
+        newTenantUser.createdBy = addedUser.userId; // Created by (could be system user or admin)
+        newTenantUser.createdAt = new Date();
+        newTenantUser.updatedBy = addedUser.userId; // Updated by
+        newTenantUser.updatedAt = new Date();
+
+        let addedTenantUser = await tenantUsersRepo.save(newTenantUser);
+        if (!addedTenantUser) {
+          await userRolesRepo.remove(addedUserRole); // Clean up if the tenant user insertion fails
+          await userLoginRepo.remove(addedUserLogin); // Clean up if the tenant user insertion fails
+          await userRepo.remove(addedUser); // Clean up if the tenant user insertion fails
+          let err = new CustomError(
+            409,
+            'fail',
+            'TenantUserCreateError',
+            'Error creating tenant user association.',
+          );
+          throw err;
+        }
+      }
+
+
+      //////////////////////////////////////////////////////////////////////////////////////////////////
       let emailVerificationLink: EmailVerificationLinkResponse =
         await this.generateEmailVerificationLink(addedUser.userId);
       let userRes: UserResponse = new UserResponse();
@@ -628,7 +699,7 @@ export class AuthService {
     });
   }
 
-  
+
   async getUser(userDetail: any): Promise<LoginResponse> {
     try {
       let db = await getDb();
@@ -852,8 +923,8 @@ export class AuthService {
             userId: userLogin.userId,
             isActive: 1,
           },
-        });       
-  
+        });
+
         let userDetail: any = {};
         userDetail.userId = user.userId;
         userDetail.firstName = user.firstName;
@@ -865,7 +936,7 @@ export class AuthService {
         userDetail.isMobileVerfied = user.isMobileVerfied;
         // userDetail.profilePicture = user.profilePicture;
         let token = jwt.generateToken(userDetail, {});
-        
+
         let refreshToken = jwt.generateRefreshToken(userLogin.userId);
         let userLoginRepo = await db.getRepository(UserLogin);
         let userLoginDetail: UserLogin = await userLoginRepo.findOne({
@@ -887,6 +958,7 @@ export class AuthService {
           parseInt(refreshTokenExpireTime) * 60 * 60 * 1000,
         );
         userLoginDetail.lastLoginAt = currentDate;
+        userLoginDetail.accessToken = token;
         userLoginDetail.wrongCredentialCounter = 0;
         let updatedUserLoginDetail = await userLoginRepo.save(userLoginDetail);
 

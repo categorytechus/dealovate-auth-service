@@ -38,6 +38,9 @@ export class UserRole extends BaseEntity {
   @Column({ name: 'updated_by', nullable: true })
   updatedBy: string;
 
+  @Column({ name: 'tenant_id', nullable: true })
+  tenantId: string;
+
   @ManyToOne(() => Role, (role) => role.roleId, {
     onUpdate: 'CASCADE',
     onDelete: 'CASCADE',

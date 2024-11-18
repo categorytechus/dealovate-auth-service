@@ -30,6 +30,12 @@ const SignUp = Joi.object({
   mobile: Joi.string()
     .required()
     .error((errors) => CustomError('mobile', errors)),
+  role: Joi.string()
+    .required()
+    .error((errors) => CustomError('role', errors)),
+  tenantId: Joi.string()
+    .optional()
+    .error((errors) => CustomError('tenantId', errors)),
   password: Joi.string().error((errors) => CustomError('password', errors)),
 });
 
