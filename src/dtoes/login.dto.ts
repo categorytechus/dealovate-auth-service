@@ -23,7 +23,7 @@ export class LoginResponse {
   mobile: string;
 
   @Expose()
-  email: string;
+  emailId: string;
 
   @Expose()
   token: string;
@@ -33,4 +33,7 @@ export class LoginResponse {
 
   @Expose()
   tokenExpiredAt: Date;
+
+  @Expose()
+  isProfileCreated: boolean;
 }

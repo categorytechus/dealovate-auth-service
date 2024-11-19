@@ -32,6 +32,9 @@ export class User {
   @Column({ name: 'is_mobile_verified', nullable: false })
   isMobileVerfied: number;
 
+  @Column({ name: 'is_profile_created', nullable: false })
+  isProfileCreated: boolean;
+
   // @Column({ name: 'alternate_mobile', nullable: true })
   // alternateMobile: string;
 

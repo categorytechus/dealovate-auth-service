@@ -971,6 +971,7 @@ export class AuthService {
         userInfo.fullName = `${user.firstName} ${user.lastName}`;
         userInfo.roles = [];
         userInfo.token = token;
+        userInfo.isProfileCreated = user.isProfileCreated
         userInfo.refreshToken = updatedUserLoginDetail.refreshToken;
         let loginDetail = plainToClass(LoginResponse, userInfo, {
           excludeExtraneousValues: true,
