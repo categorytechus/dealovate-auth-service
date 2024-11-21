@@ -753,6 +753,7 @@ export class AuthService {
               },
             });
             let userDetail: any = {};
+            userDetail.userId = user.userId;
             userDetail.firstName = user.firstName;
             userDetail.lastName = user.lastName;
             userDetail.fullName = `${user.firstName} ${user.lastName}`;
@@ -788,6 +789,7 @@ export class AuthService {
             userInfo.roles = [];
             userInfo.token = token;
             userInfo.refreshToken = userLoginDetail.refreshToken;
+            userInfo.isProfileCreated = user.isProfileCreated;
             // userInfo.tokenExpiredAt = new Date();
             let loginDetail = plainToClass(LoginResponse, userInfo, {
               excludeExtraneousValues: true,
@@ -830,6 +832,7 @@ export class AuthService {
             },
           });
           let userDetail: any = {};
+          userDetail.userId = user.userId;
           userDetail.firstName = user.firstName;
           userDetail.lastName = user.lastName;
           userDetail.fullName = `${user.firstName} ${user.lastName}`;
@@ -864,6 +867,7 @@ export class AuthService {
           userInfo.fullName = `${user.firstName} ${user.lastName}`;
           userInfo.roles = [];
           userInfo.token = token;
+          userInfo.isProfileCreated = user.isProfileCreated
           userInfo.refreshToken = userLoginDetail.refreshToken;
           // userInfo.tokenExpiredAt = new Date();
           let loginDetail = plainToClass(LoginResponse, userInfo, {
