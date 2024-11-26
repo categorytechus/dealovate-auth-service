@@ -91,5 +91,5 @@ app.use(CustomResponse);
 const httpServer = createServer(app);
 
 httpServer.listen(port, async () => {
-  console.log(`server running on http://localhost:${port}`);
+  console.log(`server running on ${port}`);
 });
