@@ -19,6 +19,8 @@ import appConfig from '../_configs/app/appConfig.json';
 import moment from 'moment';
 import { EmailNotification } from '../entities/emailNotification.entity';
 import { Role } from '../entities/role.entity';
+import { PasswordRestLinkResponse } from '../dtoes/passwordResetLink.dto';
+import { PasswordReset } from '../entities/passwordReset.entity';
 const qs = require('qs');
 dotenv.config();
 
@@ -412,7 +414,158 @@ export class AuthService {
     }
   }
 
+  async generatePasswordResetLink(
+    userName: string,
+  ): Promise<PasswordRestLinkResponse> {
+    try {
+      let db = await getDb();
+      let userLoginRepo = await db.getRepository(UserLogin);
+      let userLogin: UserLogin = await userLoginRepo.findOne({
+        where: { userName: userName != undefined ? userName : '', isActive: 1 },
+      });
+      if (userLogin == undefined) {
+        let err = new CustomError(
+          401,
+          'fail',
+          'UserNotFound',
+          ErrorMessage.UserNotFound,
+        );
+        throw err;
+      }
+      let resetPasswordRepo = db.getRepository(PasswordReset);
+      let passwordReset: PasswordReset = await resetPasswordRepo.findOne({
+        where: {
+          userId: userLogin.userId != undefined ? userLogin.userId : '',
+          isActive: 1,
+        },
+      });
+      let currentDate = new Date();
+      if (passwordReset == undefined) {
+        passwordReset = new PasswordReset();
+        passwordReset.userId = userLogin.userId;
+        passwordReset.resetToken = Encrypt.generateEncryptedToken(
+          userLogin.userId,
+        );
+        passwordReset.createdAt = currentDate;
+        passwordReset.expireAt = new Date(
+          currentDate.getTime() +
+            parseInt(resetTokenExpireTime) * 60 * 60 * 1000,
+        );
+        passwordReset.isUsed = 0;
+        passwordReset.isActive = 1;
+      } else {
+        passwordReset.resetToken = Encrypt.generateEncryptedToken(
+          userLogin.userId,
+        );
+        passwordReset.createdAt = currentDate;
+        passwordReset.expireAt = new Date(
+          currentDate.getTime() +
+            parseInt(resetTokenExpireTime) * 60 * 60 * 1000,
+        );
+        passwordReset.isUsed = 0;
+        passwordReset.isActive = 1;
+      }
+      let addedResetPasswordLink: PasswordReset =
+        await resetPasswordRepo.save(passwordReset);
+      if (addedResetPasswordLink == undefined) {
+        let err = new CustomError(
+          500,
+          'fail',
+          'PasswordResetLinkError',
+          ErrorMessage.PasswordResetLinkError,
+        );
+        throw err;
+      }
+      let passwordResetLink: PasswordRestLinkResponse =
+        new PasswordRestLinkResponse();
+      passwordResetLink.passwordResetLink = `http://13.233.87.102:9800/passwordreset/${userName}/${addedResetPasswordLink.resetToken}`;
+      return passwordResetLink;
+    } catch (error: any) {
+      throw error;
+    }
+  }
 
+  async resetPassword(
+    userName: string,
+    password: string,
+    confirmPassword: string,
+    resetToken: string,
+  ): Promise<any> {
+    try {
+      if (password != confirmPassword) {
+        let err = new CustomError(
+          401,
+          'fail',
+          'PasswordMismatch',
+          ErrorMessage.PasswordMismatch,
+        );
+        throw err;
+      }
+      let db = await getDb();
+      let passwordResetRepo = await db.getRepository(PasswordReset);
+      let resetPasswordUser: PasswordReset = await passwordResetRepo.findOne({
+        where: { resetToken: resetToken },
+      });
+      if (resetPasswordUser == undefined) {
+        let err = new CustomError(
+          401,
+          'fail',
+          'InvalidToken',
+          ErrorMessage.InvalidToken,
+        );
+        throw err;
+      } else {
+        if (new Date(resetPasswordUser.expireAt) <= new Date()) {
+          let err = new CustomError(
+            401,
+            'fail',
+            'TokenExpired',
+            ErrorMessage.TokenExpired,
+          );
+          throw err;
+        }
+        if (resetPasswordUser.isUsed == 1) {
+          let err = new CustomError(
+            401,
+            'fail',
+            'UsedToken',
+            ErrorMessage.UsedToken,
+          );
+          throw err;
+        }
+      }
+      let userLoginRepo = await db.getRepository(UserLogin);
+      let userLogin: UserLogin = await userLoginRepo.findOne({
+        where: { userName: userName, isActive: 1 },
+      });
+      if (userLogin == undefined) {
+        let err = new CustomError(
+          401,
+          'fail',
+          'UserNotFound',
+          ErrorMessage.UserNotFound,
+        );
+        throw err;
+      }
+      userLogin.hashPassword = Encrypt.encryptPass(password);
+      userLogin.updatedAt = new Date();
+      userLogin.updatedBy = userLogin.userId;
+      let updatedUserLogin: UserLogin = await userLoginRepo.save(userLogin);
+      if (updatedUserLogin == undefined) {
+        let err = new Error();
+        err.name = 'dberror';
+        err.message = 'Unable to reset password';
+        throw err;
+      }
+      resetPasswordUser.isUsed = 1;
+      let updatedResetPasswordUser: PasswordReset =
+        await passwordResetRepo.save(resetPasswordUser);
+      return { message: 'Password reset successfully' };
+    } catch (error: any) {
+      throw error;
+    }
+  }
+  
   async generateEmailVerificationLink(
     userId: string,
   ): Promise<EmailVerificationLinkResponse> {

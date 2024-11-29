@@ -134,6 +134,22 @@ export class AuthController {
     next();
   }
 
+  async generatePasswordResetLink(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ) {
+    try {
+      let userName: string = req.body.userName;
+      let passwordResetLink: PasswordRestLinkResponse =
+        await authService.generatePasswordResetLink(userName);
+      res.locals.data = passwordResetLink;
+    } catch (err) {
+      res.locals.error = err;
+    }
+    next();
+  }
+
   async testEncrypt(req: Request, res: Response, next: NextFunction) {
     try {
       let tokenDetail: any = req.body;
@@ -147,6 +163,22 @@ export class AuthController {
       res.locals.error = {
         message: 'encrypt',
       };
+    } catch (err) {
+      res.locals.error = err;
+    }
+    next();
+  }
+
+  async resetPassword(req: Request, res: Response, next: NextFunction) {
+    try {
+      let passwordDetail: any = req.body;
+      let resetPassword: any = await authService.resetPassword(
+        passwordDetail.userName,
+        passwordDetail.password,
+        passwordDetail.confirmPassword,
+        passwordDetail.resetToken,
+      );
+      res.locals.data = resetPassword;
     } catch (err) {
       res.locals.error = err;
     }
