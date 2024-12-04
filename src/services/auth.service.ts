@@ -416,6 +416,8 @@ export class AuthService {
 
   async generatePasswordResetLink(
     userName: string,
+    appUrl: string,
+    tenantId?: string
   ): Promise<PasswordRestLinkResponse> {
     try {
       let db = await getDb();
@@ -432,6 +434,23 @@ export class AuthService {
         );
         throw err;
       }
+
+      let userRepo = await db.getRepository(User);
+      let user: User = await userRepo.findOne({
+        where: { userId: userLogin.userId }, // You can also use userName if needed
+      });
+
+      if (!user) {
+        let err = new CustomError(
+          401,
+          'fail',
+          'UserNotFound',
+          ErrorMessage.UserNotFound
+        );
+        throw err;
+      }
+      const firstName = user.firstName;
+
       let resetPasswordRepo = db.getRepository(PasswordReset);
       let passwordReset: PasswordReset = await resetPasswordRepo.findOne({
         where: {
@@ -449,10 +468,12 @@ export class AuthService {
         passwordReset.createdAt = currentDate;
         passwordReset.expireAt = new Date(
           currentDate.getTime() +
-            parseInt(resetTokenExpireTime) * 60 * 60 * 1000,
+          parseInt(resetTokenExpireTime) * 60 * 60 * 1000,
         );
         passwordReset.isUsed = 0;
         passwordReset.isActive = 1;
+        passwordReset.createdBy = userLogin.userId;
+        passwordReset.updatedAt = currentDate;
       } else {
         passwordReset.resetToken = Encrypt.generateEncryptedToken(
           userLogin.userId,
@@ -460,10 +481,12 @@ export class AuthService {
         passwordReset.createdAt = currentDate;
         passwordReset.expireAt = new Date(
           currentDate.getTime() +
-            parseInt(resetTokenExpireTime) * 60 * 60 * 1000,
+          parseInt(resetTokenExpireTime) * 60 * 60 * 1000,
         );
         passwordReset.isUsed = 0;
         passwordReset.isActive = 1;
+        passwordReset.updatedAt = currentDate;
+        passwordReset.updatedBy = userLogin.userId;
       }
       let addedResetPasswordLink: PasswordReset =
         await resetPasswordRepo.save(passwordReset);
@@ -478,9 +501,12 @@ export class AuthService {
       }
       let passwordResetLink: PasswordRestLinkResponse =
         new PasswordRestLinkResponse();
-      passwordResetLink.passwordResetLink = `http://13.233.87.102:9800/passwordreset/${userName}/${addedResetPasswordLink.resetToken}`;
+      const resetLink = `${appUrl}/resetpassword?userName=${userName}&token=${addedResetPasswordLink.resetToken}`;
+      passwordResetLink.passwordResetLink = resetLink
+      await this.sendPasswordResetEmail(tenantId, userLogin.userId, userName, resetLink, firstName);
       return passwordResetLink;
     } catch (error: any) {
+      console.log(error)
       throw error;
     }
   }
@@ -565,7 +591,69 @@ export class AuthService {
       throw error;
     }
   }
-  
+
+  async changePassword(
+    oldPassword: string,
+    password: string,
+    confirmPassword: string,
+    user_id: string,
+  ): Promise<any> {
+    let db = await getDb();
+    try {
+      let userLoginRepo = await db.getRepository(UserLogin);
+      let userLogin: UserLogin = await userLoginRepo.findOne({
+        where: {
+          userId: user_id != undefined ? user_id : '',
+          isActive: 1,
+        },
+      });
+
+      if (!userLogin) {
+        let err = new CustomError(
+          401,
+          'fail',
+          'UserNotFound',
+          'User not found'
+        );
+        throw err;
+      }
+
+      if (!Encrypt.comparePassword(userLogin.hashPassword, oldPassword)) {
+        let err = new CustomError(
+          401,
+          'fail',
+          'IncorrectPassword',
+          `${ErrorMessage.IncorrectPassword}`
+        );
+        throw err;
+      }
+      if (password != confirmPassword) {
+        let err = new CustomError(
+          401,
+          'fail',
+          'PasswordMismatch',
+          ErrorMessage.PasswordMismatch,
+        );
+        throw err;
+      }
+
+      userLogin.hashPassword = Encrypt.encryptPass(password);
+      userLogin.updatedAt = new Date();
+      userLogin.updatedBy = user_id;
+      let updatedUserLogin: UserLogin = await userLoginRepo.save(userLogin);
+      if (updatedUserLogin == undefined) {
+        let err = new Error();
+        err.name = 'dberror';
+        err.message = 'Unable to reset password';
+        throw err;
+      }
+
+      return { message: 'Password changed successfully' };
+    } catch (error: any) {
+      throw error;
+    }
+  }
+
   async generateEmailVerificationLink(
     userId: string,
   ): Promise<EmailVerificationLinkResponse> {
@@ -1205,6 +1293,46 @@ export class AuthService {
       return loginRes;
     } catch (error: any) {
       throw error;
+    }
+  }
+
+  private async sendPasswordResetEmail(
+    tenantId: string,
+    userId: string,
+    emailTo: string,
+    resetLink: string,
+    firstName: string
+  ): Promise<void> {
+    try {
+      const emailData = {
+        tenant_id: tenantId,
+        user_id: userId,
+        email_to: emailTo,
+        email_cc: '',
+        email_from: 'info@categorytech.com',
+        placeholders: {
+          user_name: firstName,
+          reset_link: resetLink
+        }
+      };
+
+      // Make the API call to send the password reset email
+      const response = await axios.post(
+        `${process.env.email_url}/emails/sendPasswordResetEmail`,
+        emailData,  // Send data as an object
+        {
+          headers: {
+            'Content-Type': 'application/json',
+          }
+        }
+      );
+
+      // if (response.status !== 200) {
+      //   throw new CustomError(500, 'fail', 'EmailSendError', 'Failed to send password reset email');
+      // }
+    } catch (err) {
+      console.error('Error sending email:', err.response?.data);
+      throw new CustomError(500, 'fail', 'EmailSendError', 'Failed to send password reset email');
     }
   }
 

@@ -141,8 +141,10 @@ export class AuthController {
   ) {
     try {
       let userName: string = req.body.userName;
+      let appUrl :string = req.body.appUrl
+      let tenantId :string = req.body?.tenantId
       let passwordResetLink: PasswordRestLinkResponse =
-        await authService.generatePasswordResetLink(userName);
+        await authService.generatePasswordResetLink(userName,appUrl,tenantId);
       res.locals.data = passwordResetLink;
     } catch (err) {
       res.locals.error = err;
@@ -170,20 +172,54 @@ export class AuthController {
   }
 
   async resetPassword(req: Request, res: Response, next: NextFunction) {
+    const authToken = req.headers['authorization'];  // Accessing the token from Authorization header
     try {
       let passwordDetail: any = req.body;
-      let resetPassword: any = await authService.resetPassword(
-        passwordDetail.userName,
-        passwordDetail.password,
-        passwordDetail.confirmPassword,
-        passwordDetail.resetToken,
-      );
-      res.locals.data = resetPassword;
+  
+      // Check if Authorization token is present to decide which service to call
+      if (authToken) {
+        // If Authorization token is present, call changePassword service
+        let changePasswordResponse = await authService.changePassword(
+          passwordDetail.oldPassword,
+          passwordDetail.password,
+          passwordDetail.confirmPassword,
+          passwordDetail.user_id, 
+        );
+        res.locals.data = changePasswordResponse;
+      } else {
+        // If no Authorization token, call resetPassword service
+        let resetPasswordResponse = await authService.resetPassword(
+          passwordDetail.userName,
+          passwordDetail.password,
+          passwordDetail.confirmPassword,
+          passwordDetail.resetToken,  
+        );
+        res.locals.data = resetPasswordResponse;
+      }
     } catch (err) {
       res.locals.error = err;
     }
     next();
   }
+  
+
+  // async resetPassword(req: Request, res: Response, next: NextFunction) {
+  //   const authToken = req.headers['authorization'];
+  //   try {
+  //     let passwordDetail: any = req.body;
+  //     let resetPassword: any = await authService.resetPassword(
+  //       passwordDetail.userName,
+  //       passwordDetail.password,
+  //       passwordDetail.confirmPassword,
+  //       passwordDetail.resetToken,
+  //     );
+  //     res.locals.data = resetPassword;
+  //   } catch (err) {
+  //     res.locals.error = err;
+  //   }
+  //   next();
+  // }
+  
 
   async testDecrypt(req: Request, res: Response, next: NextFunction) {
     try {

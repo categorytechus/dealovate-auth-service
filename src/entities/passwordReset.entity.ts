@@ -8,6 +8,12 @@ export class PasswordReset extends BaseEntity {
   @Column({ name: 'reset_token', nullable: false })
   resetToken: string;
 
+  @Column({ name: 'created_by', nullable: false })
+  createdBy: string;
+
+  @Column({ name: 'updated_by' })
+  updatedBy: string;
+
   @Column({
     name: 'created_at',
     type: 'timestamp',
@@ -23,6 +29,14 @@ export class PasswordReset extends BaseEntity {
     nullable: false,
   })
   expireAt: Date;
+
+  @Column({
+    name: 'updated_at',
+    type: 'timestamp',
+    default: () => 'CURRENT_TIMESTAMP',
+    nullable: false,
+  })
+  updatedAt: Date;
 
   @Column({ name: 'is_used', nullable: false, default: 0 })
   isUsed: number;
