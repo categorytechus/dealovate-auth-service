@@ -353,8 +353,8 @@ export class AuthService {
 
 
       //////////////////////////////////////////////////////////////////////////////////////////////////
-      let emailVerificationLink: EmailVerificationLinkResponse =
-        await this.generateEmailVerificationLink(addedUser.userId);
+      // let emailVerificationLink: EmailVerificationLinkResponse =
+      //   await this.generateEmailVerificationLink(addedUser.userId);
       let userRes: UserResponse = new UserResponse();
       userRes.userId = addedUser.userId;
       userRes.firstName = addedUser.firstName;
@@ -504,7 +504,7 @@ export class AuthService {
         new PasswordRestLinkResponse();
       const resetLink = `${appUrl}/resetpassword?userName=${userName}&token=${addedResetPasswordLink.resetToken}`;
       passwordResetLink.passwordResetLink = resetLink
-      await this.sendPasswordResetEmail(tenantId, userLogin.userId, userName, resetLink, firstName);
+      // await this.sendPasswordResetEmail(tenantId, userLogin.userId, userName, resetLink, firstName);
       return passwordResetLink;
     } catch (error: any) {
       console.log(error)
@@ -763,7 +763,6 @@ export class AuthService {
       emailVerificationLink.emailVerificationLink = verificationLink;
       return emailVerificationLink;
     } catch (error: any) {
-      console.log("this bitch is causing issue",error)
       throw error;
     }
   }
