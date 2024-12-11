@@ -36,7 +36,7 @@ const SignUp = Joi.object({
   tenantId: Joi.string()
     .optional()
     .error((errors) => CustomError('tenantId', errors)),
-  password: Joi.string().error((errors) => CustomError('password', errors)),
+  password: Joi.string().optional().error((errors) => CustomError('password', errors)),
 });
 
 

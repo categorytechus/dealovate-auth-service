@@ -265,7 +265,7 @@ export class AuthService {
       let newUserLogin: UserLogin = new UserLogin();
       newUserLogin.userId = addedUser.userId;
       newUserLogin.userName = user.emailId;
-      newUserLogin.hashPassword = Encrypt.encryptPass(user.password);
+      newUserLogin.hashPassword = user.password ? Encrypt.encryptPass(user.password) : null;
       newUserLogin.authType = user.authType;
       newUserLogin.lastLoginAt = null;
       newUserLogin.userClaim = { test: 'test' };
@@ -365,6 +365,7 @@ export class AuthService {
       userRes.mobile = addedUser.mobile;
       return userRes;
     } catch (error: any) {
+      console.log(error)
       throw error;
     }
   }
@@ -722,7 +723,7 @@ export class AuthService {
       if (isTenantUser != undefined) {
         baseUrl = (
           await db.manager.findOne(Tenant, {
-            where: { tenantId: isTenantUser.tenantId, isActive: 1 },
+            where: { tenantId: isTenantUser.tenantId, isDeleted: 1 },
           })
         ).appUrl;
       } else {
@@ -762,6 +763,7 @@ export class AuthService {
       emailVerificationLink.emailVerificationLink = verificationLink;
       return emailVerificationLink;
     } catch (error: any) {
+      console.log("this bitch is causing issue",error)
       throw error;
     }
   }
