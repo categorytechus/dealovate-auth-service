@@ -179,17 +179,26 @@ export class AuthService {
       }
     } catch (error: any) {
       console.log(error);
-      let err = new CustomError(
-        401,
-        'fail',
-        'RecordNotFound',
-        ErrorMessage.RecordNotFound,
-      );
-      throw err;
+      // let err = new CustomError(
+      //   401,
+      //   'fail',
+      //   'RecordNotFound',
+      //   ErrorMessage.RecordNotFound,
+      // );
+      throw error;
     }
   }
   async createUser(user: any): Promise<UserResponse> {
     try {
+      if (user.role !== 'tenant_admin' && !user.password) {
+        let err =new CustomError(
+          400, 
+          'fail', 
+          'PasswordRequired', 
+          ErrorMessage.PasswordRequired
+        );
+        throw err
+      }
       let db = await getDb();
       let userLoginRepo = await db.getRepository(UserLogin);
       let userRepo = await db.getRepository(User);
@@ -251,7 +260,9 @@ export class AuthService {
       // newUser.otherInfo = '{}';
       // newUser.isActive = 1;
       newUser.createdAt = new Date();
-      newUser.createdBy = '';
+      newUser.createdBy = 'system';
+      newUser.updatedBy = 'system';
+      newUser.updatedAt = new Date();
       let addedUser = await userRepo.save(newUser);
       if (addedUser == undefined) {
         let err = new CustomError(
@@ -474,6 +485,7 @@ export class AuthService {
         passwordReset.isUsed = 0;
         passwordReset.isActive = 1;
         passwordReset.createdBy = userLogin.userId;
+        passwordReset.updatedBy = userLogin.userId;
         passwordReset.updatedAt = currentDate;
       } else {
         passwordReset.resetToken = Encrypt.generateEncryptedToken(
@@ -1332,7 +1344,7 @@ export class AuthService {
       //   throw new CustomError(500, 'fail', 'EmailSendError', 'Failed to send password reset email');
       // }
     } catch (err) {
-      console.error('Error sending email:', err.response?.data);
+      console.error('Error sending email:', err);
       throw new CustomError(500, 'fail', 'EmailSendError', 'Failed to send password reset email');
     }
   }

@@ -1,5 +1,6 @@
 {
   "RecordNotFound": "Record not found",
+  "PasswordRequired": "Password is Required",
   "UserNotFound": "User is not registered, please proceed with sign up",
   "UserBlocked": "Login is suspended, please contact administrator",
   "InActiveUser": "Login is blocked, please contact administrator",
