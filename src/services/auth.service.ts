@@ -1104,7 +1104,7 @@ export class AuthService {
           let currentDate = new Date();
           userLoginDetail.tokenExpireAt = new Date(
             currentDate.getTime() +
-            parseInt(refreshTokenExpireTime) * 60 * 60 * 1000,
+            parseInt(refreshTokenExpireTime) * 1000,
           );
           userLoginDetail.lastLoginAt = currentDate;
           userLoginDetail.wrongCredentialCounter = 0;
