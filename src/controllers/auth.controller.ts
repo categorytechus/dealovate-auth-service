@@ -177,7 +177,7 @@ export class AuthController {
       let passwordDetail: any = req.body;
   
       // Check if Authorization token is present to decide which service to call
-      if (authToken) {
+      if (authToken&&!passwordDetail.resetToken) {
         // If Authorization token is present, call changePassword service
         let changePasswordResponse = await authService.changePassword(
           passwordDetail.oldPassword,
@@ -187,7 +187,8 @@ export class AuthController {
         );
         res.locals.data = changePasswordResponse;
       } else {
-        // If no Authorization token, call resetPassword service
+        if(passwordDetail.resetToken){
+          // If no Authorization token, call resetPassword service
         let resetPasswordResponse = await authService.resetPassword(
           passwordDetail.userName,
           passwordDetail.password,
@@ -195,6 +196,7 @@ export class AuthController {
           passwordDetail.resetToken,  
         );
         res.locals.data = resetPasswordResponse;
+        }
       }
     } catch (err) {
       res.locals.error = err;
