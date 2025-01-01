@@ -21,6 +21,7 @@ import { EmailNotification } from '../entities/emailNotification.entity';
 import { Role } from '../entities/role.entity';
 import { PasswordRestLinkResponse } from '../dtoes/passwordResetLink.dto';
 import { PasswordReset } from '../entities/passwordReset.entity';
+import { In } from 'typeorm';
 const qs = require('qs');
 dotenv.config();
 
@@ -191,10 +192,10 @@ export class AuthService {
   async createUser(user: any): Promise<UserResponse> {
     try {
       if (user.role !== 'tenant_admin' && !user.password) {
-        let err =new CustomError(
-          400, 
-          'fail', 
-          'PasswordRequired', 
+        let err = new CustomError(
+          400,
+          'fail',
+          'PasswordRequired',
           ErrorMessage.PasswordRequired
         );
         throw err
@@ -1183,6 +1184,17 @@ export class AuthService {
           },
         });
 
+        let roleIds: string[] = userRoles.map(userRole => userRole.role.roleName);
+
+        // const roles = await db.manager.find(Role, {
+        //   where: {
+        //     roleId: In(roleIds), // Use the 'In' condition to match any of the role IDs
+        //   },
+        // });
+
+        // // Map the role names to an array of strings
+        // const roleNames: string[] = roles.map(role => role.roleName);
+
         let userDetail: any = {};
         userDetail.userId = user.userId;
         userDetail.firstName = user.firstName;
@@ -1227,7 +1239,7 @@ export class AuthService {
         userInfo.emailId = user.emailId;
         userInfo.mobile = user.mobile;
         userInfo.fullName = `${user.firstName} ${user.lastName}`;
-        userInfo.roles = [];
+        userInfo.userType = roleIds;
         userInfo.token = token;
         userInfo.isProfileCreated = user.isProfileCreated
         userInfo.refreshToken = updatedUserLoginDetail.refreshToken;
