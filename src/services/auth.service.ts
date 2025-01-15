@@ -362,6 +362,10 @@ export class AuthService {
           throw err;
         }
       }
+      const templateData={
+        user_name: user.firstName,
+      }
+      await this.sendEmail(user.tenantId, addedUser.userId, user.emailId,"sendWelcomeEmail",templateData);
 
 
       //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -517,7 +521,11 @@ export class AuthService {
         new PasswordRestLinkResponse();
       const resetLink = `${appUrl}/resetpassword?userName=${userName}&token=${addedResetPasswordLink.resetToken}`;
       passwordResetLink.passwordResetLink = resetLink
-      // await this.sendPasswordResetEmail(tenantId, userLogin.userId, userName, resetLink, firstName);
+      const templateData={
+        user_name: firstName,
+        reset_link: resetLink
+      }
+      await this.sendEmail(tenantId, userLogin.userId, userName,"sendPasswordResetEmail",templateData);
       return passwordResetLink;
     } catch (error: any) {
       console.log(error)
@@ -1321,12 +1329,12 @@ export class AuthService {
     }
   }
 
-  private async sendPasswordResetEmail(
+  private async sendEmail(
     tenantId: string,
     userId: string,
     emailTo: string,
-    resetLink: string,
-    firstName: string
+    endPoint:string,
+    placeholders: Record<string, string>,
   ): Promise<void> {
     try {
       const emailData = {
@@ -1335,15 +1343,12 @@ export class AuthService {
         email_to: emailTo,
         email_cc: '',
         email_from: 'info@categorytech.com',
-        placeholders: {
-          user_name: firstName,
-          reset_link: resetLink
-        }
+        placeholders: placeholders
       };
 
       // Make the API call to send the password reset email
       const response = await axios.post(
-        `${process.env.email_url}/emails/sendPasswordResetEmail`,
+        `${process.env.email_url}/emails/${endPoint}`,
         emailData,  // Send data as an object
         {
           headers: {
@@ -1351,13 +1356,9 @@ export class AuthService {
           }
         }
       );
-
-      // if (response.status !== 200) {
-      //   throw new CustomError(500, 'fail', 'EmailSendError', 'Failed to send password reset email');
-      // }
     } catch (err) {
       console.error('Error sending email:', err);
-      throw new CustomError(500, 'fail', 'EmailSendError', 'Failed to send password reset email');
+      throw new CustomError(500, 'fail', 'EmailSendError', 'Failed to send email');
     }
   }
 
