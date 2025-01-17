@@ -183,7 +183,8 @@ export class AuthController {
           passwordDetail.oldPassword,
           passwordDetail.password,
           passwordDetail.confirmPassword,
-          passwordDetail.user_id, 
+          passwordDetail.user_id,
+          passwordDetail.tenantId||""  
         );
         res.locals.data = changePasswordResponse;
       } else {
@@ -193,7 +194,8 @@ export class AuthController {
           passwordDetail.userName,
           passwordDetail.password,
           passwordDetail.confirmPassword,
-          passwordDetail.resetToken,  
+          passwordDetail.resetToken, 
+          passwordDetail.tenantId 
         );
         res.locals.data = resetPasswordResponse;
         }

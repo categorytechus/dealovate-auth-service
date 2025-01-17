@@ -362,10 +362,10 @@ export class AuthService {
           throw err;
         }
       }
-      const templateData={
+      const templateData = {
         user_name: user.firstName,
       }
-      await this.sendEmail(user.tenantId, addedUser.userId, user.emailId,"sendWelcomeEmail",templateData);
+      await this.sendEmail(user.tenantId, addedUser.userId, user.emailId, "sendWelcomeEmail", templateData);
 
 
       //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -521,11 +521,11 @@ export class AuthService {
         new PasswordRestLinkResponse();
       const resetLink = `${appUrl}/resetpassword?userName=${userName}&token=${addedResetPasswordLink.resetToken}`;
       passwordResetLink.passwordResetLink = resetLink
-      const templateData={
+      const templateData = {
         user_name: firstName,
         reset_link: resetLink
       }
-      await this.sendEmail(tenantId, userLogin.userId, userName,"sendPasswordResetEmail",templateData);
+      await this.sendEmail(tenantId, userLogin.userId, userName, "sendPasswordResetEmail", templateData);
       return passwordResetLink;
     } catch (error: any) {
       console.log(error)
@@ -538,6 +538,7 @@ export class AuthService {
     password: string,
     confirmPassword: string,
     resetToken: string,
+    tenantId:string
   ): Promise<any> {
     try {
       if (password != confirmPassword) {
@@ -608,6 +609,23 @@ export class AuthService {
       resetPasswordUser.isUsed = 1;
       let updatedResetPasswordUser: PasswordReset =
         await passwordResetRepo.save(resetPasswordUser);
+
+      // Fetch user details from 'users' table
+      let userRepo = await db.getRepository(User);
+      let user: User = await userRepo.findOne({
+        where: { userId: userLogin.userId },
+      });
+
+      if (!user) {
+        let err = new CustomError(401, 'fail', 'UserNotFound', 'User not found');
+        throw err;
+      }
+
+      const templateData = {
+        user_name: user.firstName,
+      }
+      await this.sendEmail(tenantId, user.userId, userName, "sendPasswordChangeConfirmationEmail", templateData);
+
       return { message: 'Password reset successfully' };
     } catch (error: any) {
       throw error;
@@ -619,6 +637,7 @@ export class AuthService {
     password: string,
     confirmPassword: string,
     user_id: string,
+    tenantId:string
   ): Promise<any> {
     let db = await getDb();
     try {
@@ -669,6 +688,23 @@ export class AuthService {
         err.message = 'Unable to reset password';
         throw err;
       }
+
+      // Fetch user details from 'users' table
+      let userRepo = await db.getRepository(User);
+      let user: User = await userRepo.findOne({
+        where: { userId: user_id },
+      });
+
+      if (!user) {
+        let err = new CustomError(401, 'fail', 'UserNotFound', 'User not found');
+        throw err;
+      }
+
+      const templateData = {
+        user_name: user.firstName,
+      }
+      await this.sendEmail(tenantId, user_id, userLogin.userName, "sendPasswordChangeConfirmationEmail", templateData);
+
 
       return { message: 'Password changed successfully' };
     } catch (error: any) {
@@ -1333,7 +1369,7 @@ export class AuthService {
     tenantId: string,
     userId: string,
     emailTo: string,
-    endPoint:string,
+    endPoint: string,
     placeholders: Record<string, string>,
   ): Promise<void> {
     try {
